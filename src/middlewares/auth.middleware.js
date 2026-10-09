@@ -36,3 +36,15 @@ export const decodeToken = async(authorization,tokenType=tokenEnum.access)=>{
     }
     return {user};
 }
+
+
+export const authorization=(...roles)=>(req,res,next)=>{
+    console.log({roles,userRole:req.user.role})
+    if(!roles.includes(req.user.role)){
+        return errorRes({
+            res,
+            status:401
+        }, { errMsg: "Unauthorized" })
+    }
+    next()
+}

@@ -2,6 +2,7 @@
 import { userModel } from "../../DB/models/users.model.js";
 import { errorRes } from "../../utils/error.handle.js";
 import jwt from "jsonwebtoken"
+import { createHash } from "../../utils/security/hash.js";
 export const signupService = async({fullname,email,password,gender,phone,bio,age,userName})=>
 {
     // const isExist = await userModel.findOne({$or:
@@ -27,7 +28,7 @@ export const signupService = async({fullname,email,password,gender,phone,bio,age
         {
             fullname,
             email,
-            password,
+            password:await createHash(password),
             gender,
             phone,
             bio,

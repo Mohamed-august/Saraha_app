@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { signupService , loginService} from "./users.service.js";
 import { successRes } from "../../utils/success.res.js";
-import { auth } from "../../middlewares/auth.middleware.js";
+import { auth, authorization } from "../../middlewares/auth.middleware.js";
+import { RoleEnum } from "./users.types.js";
+import { signupSchema } from "./user.validation.js";
+import {validation} from "../../middlewares/validation.middleware.js"
 const userRouter = Router()
 
 export const routes = {
@@ -12,7 +15,7 @@ export const routes = {
     refreshToken:"/refresh-Token", //GET
 }
 
-userRouter.post(routes.signup,async(req,res)=>
+userRouter.post(routes.signup,validation(signupSchema),async(req,res)=>
     {
         const {data} = await signupService(req.body)
         return successRes({
@@ -32,7 +35,7 @@ userRouter.post(routes.login,async(req,res)=>
 })
 
 
-userRouter.get(routes.me,auth,async(req,res)=>
+userRouter.get(routes.me,auth,authorization(RoleEnum.user),async(req,res)=>
 {
     const user = req.user
     successRes({
