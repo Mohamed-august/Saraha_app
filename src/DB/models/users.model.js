@@ -1,6 +1,6 @@
 import { model , Schema } from "mongoose"
 import { GenderEnum , ProviderEnum , RoleEnum } from "../../modules/Users/users.types.js"
-
+import {encryption, decryption} from "../../utils/security/encryption.js"
 const userSchema =new Schema({
     firstname:{
         type:String,
@@ -21,6 +21,14 @@ const userSchema =new Schema({
     },
     phone:{
         type:String,
+        set(value)
+        {
+            return encryption(value)
+        },
+        get(value)
+        {
+            return decryption(value)
+        }
     },
     age:Number,
     profileImage:{
@@ -59,7 +67,7 @@ const userSchema =new Schema({
     strict:true,
     strictQuery:true,
     optimisticConcurrency:true,
-    toJson:{
+    toJSON:{
         virtuals:true,
         getters:true,
         transform(doc,ret)

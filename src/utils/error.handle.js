@@ -1,4 +1,4 @@
-export const errorRes=({msg="error",statusCode=500})=>
+export const errorRes=({msg="error",statusCode=500,options})=>
 {
         throw new Error(msg,{
         cause:{

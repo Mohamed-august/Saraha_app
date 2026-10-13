@@ -2,18 +2,20 @@ import { errorRes } from "../utils/error.handle.js"
 
 export const validation = (schema)=>
 {
+
     return (req,res,next)=>
     {
-        const validationErrors=[]
-        const validationRes=schema.safeParse(req.body)
-                Object.keys(schema).map(ele=>
+        const validationErrors=[]   
+        Object.keys(schema).map(ele=>
         {
             schema[ele].safeParse(req[ele])
-        }
-        )
-                if(!validationRes.success)
+            const validationRes=schema[ele].safeParse(req[ele])
+            if(!validationRes.success)
                 {
-                    validationErrors.push({[ele]:validation.error.issues})
+                    validationErrors.push({[ele]:validationRes.error.issues})
+                }
+        })
+                
                     if(validationErrors.length)
                     {
                         errorRes({
@@ -21,7 +23,7 @@ export const validation = (schema)=>
                         statusCode:400,
                         options:validationErrors})
                     }
-                    }
                     next()
-                    }
-                    }
+                    }     
+}
+

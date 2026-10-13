@@ -1,10 +1,11 @@
-
 import { userModel } from "../../DB/models/users.model.js";
 import { errorRes } from "../../utils/error.handle.js";
 import jwt from "jsonwebtoken"
-import { createHash } from "../../utils/security/hash.js";
+import { createHash,compareHash } from "../../utils/security/hash.js";
+import { decodeToken, tokenEnum } from "../../middlewares/auth.middleware.js";
 export const signupService = async({fullname,email,password,gender,phone,bio,age,userName})=>
 {
+
     // const isExist = await userModel.findOne({$or:
     //     [{email},
     //         {userName}]
@@ -48,14 +49,14 @@ export const loginService = async({identifier,password})=>
         errorRes({msg:"invalid credentails",
             statusCode:400})
     }
-    if(user.password !== password){
-        errorRes({msg:"invalid credentials",
-            statusCode:400})
+    const isMatch = await compareHash(password, user.password);
+    if (!isMatch) {
+        errorRes({ msg: "invalid credentials", statusCode: 400 });
     }
     const accessToken =jwt.sign({
         _id:user._id,
         email:user.email
-    },process.env.TOKEN_SECRET,{expiresIn:"30M"})
+    },process.env.ACCESS_TOKEN_SECRET,{expiresIn:"30M"})
 
     const refreshToken = jwt.sign({
         _id:user._id,

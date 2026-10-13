@@ -1,4 +1,4 @@
-import z from "zod"
+import {z} from "zod"
 import { GenderEnum } from "./users.types.js";
 
 export const signupSchema={
@@ -11,10 +11,5 @@ export const signupSchema={
     gender:z.enum(GenderEnum),
     userName:z.string(),
     bio:z.string().optional()
-    }),
-    query:z.strictObject({
-        id:z.string()
     })
-
 }
-

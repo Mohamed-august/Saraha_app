@@ -13,10 +13,6 @@ const bootstrap = async ()=>
     const app =express()
     app.use(express.json())
     await DBConnection()
-    app.get("/",(req,res)=>
-    {
-        console.log("Hello")
-    })
 
     app.use(userRoutes.base,userRouter)
 

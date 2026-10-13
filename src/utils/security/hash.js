@@ -1,4 +1,4 @@
-import {hash} from "bcrypt"
+import {hash,compare} from "bcrypt"
 // import {hash} from "argon2"
 
 
