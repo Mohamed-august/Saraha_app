@@ -1,6 +1,27 @@
 import { model , Schema } from "mongoose"
 import { GenderEnum , ProviderEnum , RoleEnum } from "../../modules/Users/users.types.js"
 import {encryption, decryption} from "../../utils/security/encryption.js"
+
+const otpSchema = new Schema({
+        otp:{
+            type:String,
+            required:true,
+            minLength:6,
+            maxLength:6
+        },
+        expireIn:{
+            type:Date,
+            default:Date.now()+ 5 * 60 * 1000
+        }
+    },
+{
+_id:false
+})
+
+otpSchema.index("expireIn",{
+    expireAfterSeconds:0,
+})
+
 const userSchema =new Schema({
     firstname:{
         type:String,
@@ -17,7 +38,10 @@ const userSchema =new Schema({
     },
     password:{
         type:String,
-        required:true
+        required:function()
+        {
+            this.provider == ProviderEnum.system? true : false
+        }
     },
     phone:{
         type:String,
@@ -60,7 +84,8 @@ const userSchema =new Schema({
     },
     blockedAt:{
         type:Date,
-    }
+    },
+    otp: otpSchema
 },
 {
     timestamps:true,
