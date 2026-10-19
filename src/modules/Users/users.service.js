@@ -5,7 +5,6 @@ import { createHash,compareHash } from "../../utils/security/hash.js";
 import { decodeToken, tokenEnum } from "../../middlewares/auth.middleware.js";
 import { OAuth2Client } from "google-auth-library";
 import { ProviderEnum } from "./users.types.js";
-import { successRes } from "../../utils/success.res.js";
 import { sendEmail } from "../../utils/email/sendEmail.js";
 import {emailTemplate} from "../../utils/email/emailTemplate.js"
 import { random } from "../../utils/email/createOtp.js";
@@ -42,9 +41,9 @@ export const signupService = async({fullname,email,password,gender,phone,bio,age
             bio,
             age,
             userName,
-            otp:
-            {
-                otp
+            otp: {
+                code:otp,
+                expireIn: new Date(Date.now() + 15 * 60 * 1000)
             }
         }
     )
@@ -127,40 +126,87 @@ export const googleLogin =async(token)=>
         }
     }
 
-export const confirmEmail = async (email,otp)=>
-{
-    const user = await userModel.findOne({email,confirmedAt:
-        {
-            $exists:false
+export const confirmEmail = async (email, otp) => {
+    if (!email || !otp) {
+        errorRes({
+            msg: "email and otp are required",
+            statusCode: 400
+        })
+    }
+    const user = await userModel.findOne({
+        email,
+        confirmedAt: {
+            $exists: false
         }
     })
-    if(!user)
-    {
+    if (!user) {
         errorRes({
-            msg:"user not found",
-            statusCode:404,
+            msg: "user not found or already confirmed",
+            statusCode: 404,
         })
     }
-    if(!user.otp || user.otp.expireIn<Date.now())
-    {
+    if (!user.otp || !user.otp.expireIn || user.otp.expireIn < Date.now()) {
         errorRes({
-            msg:"otp expired",
-            statusCode:404
+            msg: "otp expired",
+            statusCode: 400
         })
     }
-    if(user.otp.otp!==otp)
-    {
+    const isMatch = (user.otp.code === String(otp)) || (await compareHash(String(otp), user.otp.code).catch(() => false))
+    if (!isMatch) {
         errorRes({
-            msg:"in-valid otp",
-            statusCode:404
+            msg: "in-valid otp",
+            statusCode: 400
         })
     }
-    user.confirmedAt = Date.now()
+    user.confirmedAt = new Date()
+    user.otp = undefined
     await user.save()
     return {
-        data:
-        {
+        data: {}
+    }
+}
 
-        }}
+export const forgetPassSendOtp = async (email) => {
+    if (!email) {
+        errorRes({
+            msg: "email is required",
+            statusCode: 400
+        })
+    }
+    const user = await userModel.findOne({ email })
+
+    if (!user) {
+        errorRes({
+            msg: "user not found",
+            statusCode: 404
+        })
     }
 
+    if (user.otp?.expireIn > Date.now()) {
+        errorRes({
+            msg: "wait five (5) minutes to resend otp",
+            statusCode: 400
+        })
+    }
+
+    const otp = random(6)
+
+    user.otp = {
+        code:otp,
+        expireIn: new Date(Date.now() + 15 * 60 * 1000)
+    }
+    await user.save()
+
+    await sendEmail({
+        to: email,
+        subject: "forget password",
+        html: emailTemplate({
+            otp,
+            subject: "forget password"
+        })
+    })
+
+    return {
+        data: {}
+    }
+}

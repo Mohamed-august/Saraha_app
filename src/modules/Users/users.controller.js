@@ -1,21 +1,22 @@
 import { Router } from "express";
-import { signupService , loginService, refreshToken, confirmEmail} from "./users.service.js";
+import { signupService, loginService, refreshToken, confirmEmail, forgetPassSendOtp } from "./users.service.js";
 import { successRes } from "../../utils/success.res.js";
 import { auth, authorization } from "../../middlewares/auth.middleware.js";
 import { signupSchema } from "./user.validation.js";
-import {validation} from "../../middlewares/validation.middleware.js"
+import { validation } from "../../middlewares/validation.middleware.js";
 import { RoleEnum } from "./users.types.js";
 import { googleLogin } from "./users.service.js";
 const userRouter = Router()
 
 export const routes = {
-    base:"/users",
-    signup:"/signup", //POST
-    login:"/login", //POST
-    me:"/me", //GET
-    refreshToken:"/refresh-Token", //POST
-    googleSignup:"/signup/gmail", //POST
-    confirmEmail:"/confirm-email", //PATCH
+    base: "/users",
+    signup: "/signup", //POST
+    login: "/login", //POST
+    me: "/me", //GET
+    refreshToken: "/refresh-Token", //POST
+    googleSignup: "/signup/gmail", //POST
+    confirmEmail: "/confirm-email", //PATCH
+    forgetPass: "/forget-password", //PATCH
 }
 
 userRouter.post(routes.signup,validation(signupSchema),async(req,res)=>
@@ -63,10 +64,16 @@ userRouter.post(routes.googleSignup,async(req,res)=>{
     successRes({res,data})
 })
 
-userRouter.patch(routes.confirmEmail,async(req,res)=>
-{
-    const {email,otp}=req.body
-    const {data}= await confirmEmail(email,otp)
-    successRes({res,data})
+userRouter.patch(routes.confirmEmail, async (req, res) => {
+    const { email, otp } = req.body
+    const { data } = await confirmEmail(email, otp)
+    return successRes({ res, data })
 })
+
+userRouter.patch(routes.forgetPass, async (req, res) => {
+    const { email } = req.body
+    await forgetPassSendOtp(email)
+    return successRes({ res })
+})
+
 export default userRouter

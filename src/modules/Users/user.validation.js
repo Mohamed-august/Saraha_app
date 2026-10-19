@@ -13,3 +13,16 @@ export const signupSchema={
     bio:z.string().optional()
     })
 }
+
+export const confirmEmailSchema = {
+    body: z.strictObject({
+        email: z.email(),
+        otp: z.union([z.string().length(6), z.number()])
+    })
+}
+
+export const forgetPasswordSchema = {
+    body: z.strictObject({
+        email: z.email()
+    })
+}

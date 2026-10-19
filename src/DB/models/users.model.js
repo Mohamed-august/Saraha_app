@@ -3,23 +3,16 @@ import { GenderEnum , ProviderEnum , RoleEnum } from "../../modules/Users/users.
 import {encryption, decryption} from "../../utils/security/encryption.js"
 
 const otpSchema = new Schema({
-        otp:{
-            type:String,
-            required:true,
-            minLength:6,
-            maxLength:6
-        },
-        expireIn:{
-            type:Date,
-            default:Date.now()+ 5 * 60 * 1000
-        }
+    code: {
+        type: String,
+        required: true
     },
-{
-_id:false
-})
-
-otpSchema.index("expireIn",{
-    expireAfterSeconds:0,
+    expireIn: {
+        type: Date,
+        default: () => new Date(Date.now() + 15 * 60 * 1000)
+    }
+}, {
+    _id: false
 })
 
 const userSchema =new Schema({
