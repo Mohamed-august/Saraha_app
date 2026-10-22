@@ -2,10 +2,12 @@ import { Router } from "express";
 import { signupService, loginService, refreshToken, confirmEmail, forgetPassSendOtp } from "./users.service.js";
 import { successRes } from "../../utils/success.res.js";
 import { auth, authorization } from "../../middlewares/auth.middleware.js";
-import { signupSchema } from "./user.validation.js";
+import { resetPasswordSchema, signupSchema } from "./user.validation.js";
 import { validation } from "../../middlewares/validation.middleware.js";
 import { RoleEnum } from "./users.types.js";
 import { googleLogin } from "./users.service.js";
+import { resetPassword } from "./users.service.js";
+import multer from "multer";
 const userRouter = Router()
 
 export const routes = {
@@ -17,6 +19,8 @@ export const routes = {
     googleSignup: "/signup/gmail", //POST
     confirmEmail: "/confirm-email", //PATCH
     forgetPass: "/forget-password", //PATCH
+    resetPassword:"/reset-password", //PATCH
+    uploadFile:"upload-file", //GET
 }
 
 userRouter.post(routes.signup,validation(signupSchema),async(req,res)=>
@@ -73,7 +77,27 @@ userRouter.patch(routes.confirmEmail, async (req, res) => {
 userRouter.patch(routes.forgetPass, async (req, res) => {
     const { email } = req.body
     await forgetPassSendOtp(email)
-    return successRes({ res })
+    return successRes({
+        res
+        ,msg:"otp send to email if exist"
+        })
+})
+
+userRouter.patch(routes.resetPassword,validation(resetPasswordSchema),async(req,res)=>{
+    const {email,otp,password} = req.body
+    await resetPassword(email,otp,password)
+
+    successRes({
+        res
+    })
+})
+
+userRouter.get(routes.uploadFile,multer().any(),async(req,res)=>{
+    console.log({body:req.body})
+
+    successRes({
+        res
+    })
 })
 
 export default userRouter
