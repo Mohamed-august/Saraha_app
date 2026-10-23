@@ -20,7 +20,7 @@ export const routes = {
     confirmEmail: "/confirm-email", //PATCH
     forgetPass: "/forget-password", //PATCH
     resetPassword:"/reset-password", //PATCH
-    uploadFile:"/upload-file", //GET
+    uploadFile:"/upload-file", //POST
 }
 
 userRouter.post(routes.signup,validation(signupSchema),async(req,res)=>
