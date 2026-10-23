@@ -7,7 +7,7 @@ import { validation } from "../../middlewares/validation.middleware.js";
 import { RoleEnum } from "./users.types.js";
 import { googleLogin } from "./users.service.js";
 import { resetPassword } from "./users.service.js";
-import multer from "multer";
+import { uploadFile } from "../../utils/multer.js";
 const userRouter = Router()
 
 export const routes = {
@@ -20,7 +20,7 @@ export const routes = {
     confirmEmail: "/confirm-email", //PATCH
     forgetPass: "/forget-password", //PATCH
     resetPassword:"/reset-password", //PATCH
-    uploadFile:"upload-file", //GET
+    uploadFile:"/upload-file", //GET
 }
 
 userRouter.post(routes.signup,validation(signupSchema),async(req,res)=>
@@ -92,12 +92,17 @@ userRouter.patch(routes.resetPassword,validation(resetPasswordSchema),async(req,
     })
 })
 
-userRouter.get(routes.uploadFile,multer().any(),async(req,res)=>{
-    console.log({body:req.body})
-
-    successRes({
-        res
+userRouter.post(routes.uploadFile,auth,uploadFile("users").single("image"),async(req,res)=>{
+    console.log({
+        body:req.body,
+        file:req.file
     })
+
+    req.user.profileImage=req.file.path
+
+    await req.user.save()
+
+    successRes({res})
 })
 
 export default userRouter

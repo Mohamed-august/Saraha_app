@@ -8,6 +8,8 @@ import userRouter , { routes as userRoutes } from "./modules/Users/users.control
 
 import cors from "cors"
 
+import { userModel } from "./DB/models/users.model.js"
+
 const bootstrap = async ()=>
 {
     const app =express()
@@ -15,7 +17,20 @@ const bootstrap = async ()=>
         origin:"*"
     }))
     app.use(express.json())
+    
     await DBConnection()
+
+    app.get("/",async(req,res)=>
+    {
+        const user=await userModel.find()
+
+        res.json({
+            user
+        })
+    })
+    
+    app.use("/uploads",express.static("./uploads"))
+
     app.use(userRoutes.base,userRouter)
 
     

@@ -1,4 +1,4 @@
-import {email, z} from "zod"
+import {z} from "zod"
 import { GenderEnum } from "./users.types.js";
 
 export const signupSchema={
