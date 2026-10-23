@@ -92,13 +92,15 @@ userRouter.patch(routes.resetPassword,validation(resetPasswordSchema),async(req,
     })
 })
 
-userRouter.post(routes.uploadFile,auth,uploadFile("users").single("image"),async(req,res)=>{
+userRouter.post(routes.uploadFile,auth,uploadFile("users").fields([{name:"image",maxCount:1},
+    {name:"images",maxCount:8}
+]),async(req,res)=>{
     console.log({
         body:req.body,
-        file:req.file
+        files:req.files
     })
 
-    req.user.profileImage=req.file.path
+    req.user.profileImage=req.files.path
 
     await req.user.save()
 
