@@ -24,7 +24,7 @@ export const resetPasswordSchema={
         email:z.email(),
         otp:z.string().min(6).max(6),
         password:z.string(),
-        confirmPaasword:z.string(),
+        confirmPassword:z.string(),
     }).refine((arg)=>arg.password==arg.confirmPassword,{
         error:"password mismatch",
         path:["password","confirmPassword"]
