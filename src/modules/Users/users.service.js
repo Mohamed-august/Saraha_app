@@ -16,8 +16,8 @@ const calcBlockSecs =(count)=>
 {
 
     const Block_Mins_Array = [5,15,60,300,1440]
-    const index = Math.min(count,Block_Mins_Array)
-    return Block_Mins_Array[index-1]
+    const index = Math.min(count,Block_Mins_Array.length)
+    return Block_Mins_Array[index-1] * 60
 
 }
 
@@ -173,69 +173,140 @@ export const confirmEmail = async (email, otp) => {
         })
     }
 
-    
+    const isBlocked = await redisClient.get(attemptsBlockKey(user._id))
+
+    if (isBlocked) {
+        const blockedTTL = await redisClient.ttl(attemptsBlockKey(user._id))
+        errorRes({
+            msg: `try again after ${Math.ceil(blockedTTL / 60)} M`,
+            statusCode: 400
+        })
+    }
+
     const hashedOtp = await redisClient.get(confirmEmailKey(user._id))
-    
-    if(!otp)
-    {
+
+    if (!hashedOtp) {
         errorRes({
-            msg : "invalid or expired otp"
+            msg: "invalid or expired otp",
+            statusCode: 400
         })
     }
 
-    const isBlocked= await redisClient.get(attemptsBlockKey(user._id))
+    const isOtpCorrect = await compareHash(otp, hashedOtp)
 
-    if(isBlocked)
-    {
-        const blockedTTL =await redisClient.ttl(attemptsBlockKey(user._id))
+    if (!isOtpCorrect) {
+        const attempts = await redisClient.incr(attemptsKey(user._id))
+        if (attempts >= 5) {
+            const blockCount = await redisClient.incr(attemptsBlockCountKey(user._id))
+            const blockSecs = calcBlockSecs(blockCount)
+            await redisClient.set(attemptsKey(user._id),0)
+            await redisClient.set(attemptsBlockKey(user._id), 0, {
+                expiration: {
+                    type: "EX",
+                    value: blockSecs
+                }
+            })
+            await redisClient.del(attemptsKey(user._id))
+            errorRes({
+                msg: `try again after ${Math.ceil(blockSecs / 60)} M`,
+                statusCode: 400
+            })
+        }
         errorRes({
-            msg:`try again after ${Math.ceil(ttl/60)} M`
-        , statusCode:400
+            msg: "invalid otp",
+            statusCode: 400
         })
-    }   
-
-    
-    const isOtpCorrect = await compareHash(otp,hashedOtp)
-
-
-    if(!isOtpCorrect)
-    {
-    
-    const attempts = await redisClient.incr(attemptsKey(user._id))
-    if(attempts>=5)
-    {
-        const blockCount=await redisClient.incr(attemptsBlockCountKey(user._id))
-        await redisClient.set(attemptsBlockKey(user._id),0,{
-    
-        expiration:{
-                type:"EX",
-                value:calcBlockSecs(blockCount)
-            }}
-    )
-    errorRes({
-        msg:`try again after ${Math.ceil(ttl/60)} M` 
-    , statusCode:400
-    })
-
-    }
     }
 
-    else{
-        user.confirmedAt=Date.now()
-        await user.save()
-        const userkeys=await redisClient.keys(`${userPrefixKey(user._id)}*`)
+    user.confirmedAt = new Date()
+    await user.save()
+
+    const userkeys = await redisClient.keys(`${userPrefixKey(user._id)}*`)
+    if (userkeys.length) {
         await redisClient.del(userkeys)
     }
 
-
-    user.confirmedAt = new Date()
-
-    user.otp = undefined
-
-    await user.save()
-
     return {
         data: {}
+    }
+}
+
+export const resendConfirmEmailOtp=async(email)=>
+{
+
+    const user = await userModel.findOne({email,
+        confirmedAt:{
+        $exists:false
+    }})
+    if(!user)
+    {
+        errorRes({
+            msg:"user not found",
+            statusCode:404
+        })
+    }
+
+    const userId = user._id
+    const isBlocked = await redisClient.get(attemptsBlockKey(userId))
+    if (isBlocked) {
+        const blockedTTL = await redisClient.ttl(attemptsBlockKey(userId))
+        errorRes({
+            msg: `try again after ${Math.ceil(blockedTTL / 60)} M`,
+            statusCode: 400
+        })
+    }
+
+    const cannotResend = await redisClient.get(resendOtpKey(userId))
+    if (cannotResend) {
+        const resendTTL = await redisClient.ttl(resendOtpKey(userId))
+        errorRes({
+            msg: `wait ${resendTTL > 0 ? resendTTL : 60} seconds before requesting a new otp`,
+            statusCode: 400
+        })
+    }
+
+    const attempts = await redisClient.incr(attemptsKey(user._id))
+    if (attempts >= 5) {
+        const blockCount = await redisClient.incr(attemptsBlockCountKey(user._id))
+        const blockSecs = calcBlockSecs(blockCount)
+        await redisClient.set(attemptsBlockKey(user._id), 0, {
+            expiration: {
+                type: "EX",
+                value: blockSecs
+            }
+        })
+        await redisClient.del(attemptsKey(user._id))
+        errorRes({
+            msg: `try again after ${Math.ceil(blockSecs / 60)} M`,
+            statusCode: 400
+        })
+        await redisClient.set(attemptsKey(user._id),0)
+    }
+    else {
+        await redisClient.set(resendOtpKey(user._id), 0, {
+            expiration: {
+                type: "EX",
+                value: 60
+            }
+        })
+    }
+    const otp=random(6)
+    await sendEmail({
+        to:email,
+        subject:"confirm email",
+        html:emailTemplate({otp,subject:"confirm email"})
+    })
+    const rediskey=confirmEmailKey(user._id)
+    await redisClient.set(rediskey,await createHash(otp),{
+        expiration:{
+            type:"EX",
+            value: 5 * 60
+        }
+    })
+    return{
+        data:{
+
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { signupService, loginService, refreshToken, confirmEmail, forgetPassSendOtp } from "./users.service.js";
+import { signupService, loginService, refreshToken, confirmEmail, forgetPassSendOtp, resendConfirmEmailOtp } from "./users.service.js";
 import { successRes } from "../../utils/success.res.js";
 import { auth, authorization } from "../../middlewares/auth.middleware.js";
 import { resetPasswordSchema, signupSchema } from "./user.validation.js";
@@ -21,6 +21,7 @@ export const routes = {
     forgetPass: "/forget-password", //PATCH
     resetPassword:"/reset-password", //PATCH
     uploadFile:"/upload-file", //POST
+    resendConfirmEmailOtp:"/resend-confirm-email-otp" //POST
 }
 
 userRouter.post(routes.signup,validation(signupSchema),async(req,res)=>
@@ -106,5 +107,17 @@ userRouter.post(routes.uploadFile,auth,uploadFile("users").fields([{name:"image"
 
     successRes({res})
 })
+
+
+userRouter.post(routes.resendConfirmEmailOtp,async(req,res)=>{
+    const {email}=req.body
+    const {data}= await resendConfirmEmailOtp(email)
+
+    successRes({
+        res,data
+    })
+
+})
+
 
 export default userRouter
