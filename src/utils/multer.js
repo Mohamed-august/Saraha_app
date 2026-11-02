@@ -22,7 +22,7 @@ export const uploadFile=(dest="/general")=>
 
         filename:(req,file,cb)=>
         {
-            const username=req.user.username
+            const username=req.user?.username?username:""
             const filename=username + "_" + Date.now() + "_" + file.originalname
             cb(null,filename)
         }

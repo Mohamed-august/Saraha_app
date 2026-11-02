@@ -9,7 +9,7 @@ import { sendEmail } from "../../utils/email/sendEmail.js";
 import {emailTemplate} from "../../utils/email/emailTemplate.js"
 import { random } from "../../utils/email/createOtp.js";
 import { redisClient } from "../../DB/redis.connect.js";
-import { attemptsBlockCountKey, attemptsBlockKey, attemptsKey, confirmEmailKey, resendOtpKey, userPrefixKey } from "../../utils/redis.services.js";
+import { attemptsBlockCountKey, attemptsBlockKey, attemptsKey, confirmEmailKey, resendOtpKey, userPrefixKey, userSessionJwtIdKey, userSessionJwtIdPrefixKey } from "../../utils/redis.services.js";
 const googleClient = new OAuth2Client()
 
 const calcBlockSecs =(count)=>
@@ -53,8 +53,7 @@ export const signupService = async({fullname,email,password,gender,phone,bio,age
             phone,
             bio,
             age,
-            userName,
-            
+            userName
         }
     )
     const rediskey=confirmEmailKey(user._id)
@@ -89,23 +88,38 @@ export const loginService = async({identifier,password})=>
     if (!isMatch) {
         errorRes({ msg: "invalid credentials", statusCode: 400 });
     }
+    const jwtid= random()
     const accessToken =jwt.sign({
         _id:user._id,
         email:user.email
-    },process.env.ACCESS_TOKEN_SECRET,{expiresIn:"30M"})
+    },process.env.ACCESS_TOKEN_SECRET,{expiresIn:"30M",
+        jwtid
+    }
+    
+)
 
     const refreshToken = jwt.sign({
         _id:user._id,
         email:user.email
-    },process.env.REFRESH_TOKEN_SECRET,{expiresIn:"7d"})
+    },process.env.REFRESH_TOKEN_SECRET,{expiresIn:"7d",
+        jwtid
+    })
+    await redisClient.set(userSessionJwtIdKey(user._id,jwtid),jwtid,{
+        expiration:{
+            type:"EX",
+            value:7*24*60*60
+        }
+    })
 
-    return {data:{accessToken,refreshToken}}
+    return {data:{
+        accessToken,
+        refreshToken}}
 }
 
 export const refreshToken=async({authorization})=>
 {
-    const {user} = await decodeToken({authorization,tokenType:tokenEnum.refresh})
-    const accessToken = jwt.sign({_id:user._id},process.env.ACCESS_TOKEN_SECRET,{expiresIn:"30M"})
+    const {user,jti} = await decodeToken({authorization,tokenType:tokenEnum.refresh})
+    const accessToken = jwt.sign({_id:user._id},process.env.ACCESS_TOKEN_SECRET,{expiresIn:"30M",jwtid:jti})
     return {data:{accessToken}}
 }
 
@@ -387,4 +401,52 @@ export const resetPassword=async(email,otp,password)=>
 //         })
 //     }
 // }
+
+export const logout = async(userId,jti)=>
+{
+    const user = await userModel.findById(userId)
+    if(!user)
+    {
+        errorRes({
+            msg:"user not found",
+            statusCode:404
+        })
+    }
+    const sessionKey = await redisClient.keys(`${userSessionJwtIdKey(user._id,jti)}*`)
+    const deletecount=await redisClient.del(sessionKey) 
+    if(deletecount<1)
+    {
+        errorRes({
+            msg:"already logged out",
+            statusCode:400
+        })
+    }
+    return {
+        data:{}
+    }
+}
+
+export const logoutFromAllDevices = async(userId,jti)=>
+{
+    const user = await userModel.findById(userId)
+    if(!user)
+    {
+        errorRes({
+            msg:"user not found",
+            statusCode:404
+        })
+    }
+    const sessionKey = await redisClient.keys(`${userSessionJwtIdPrefixKey(user._id,jti)}*`)
+    const deletecount=await redisClient.del(sessionKey)   
+    if(deletecount<1)
+    {
+        errorRes({
+            msg:"already logged out",
+            statusCode:400
+        })
+    }
+    return {
+        data:{}
+    }
+}
 

@@ -11,3 +11,6 @@ export const attemptsBlockKey =(userId) => `${userPrefixKey(userId)}:block`
 
 export const attemptsBlockCountKey =(userId) => `${userPrefixKey(userId)}:blockCount`
 
+export const userSessionJwtIdPrefixKey=(userId) =>{ return `users:${userId}:session`}
+
+export const userSessionJwtIdKey=(userId,jwtId) =>{ return `${userSessionJwtIdPrefixKey(userId)}:${jwtId}`}

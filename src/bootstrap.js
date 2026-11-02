@@ -5,7 +5,7 @@ import chalk from "chalk"
 import { DBConnection } from "./DB/db.connection.js"
 
 import userRouter , { routes as userRoutes } from "./modules/Users/users.controller.js"
-
+import messageRouter , { routes as messageRoutes } from "./modules/message/message.controller.js"
 import cors from "cors"
 
 import { userModel } from "./DB/models/users.model.js"
@@ -34,6 +34,7 @@ const bootstrap = async ()=>
 
     app.use(userRoutes.base,userRouter)
 
+    app.use(messageRoutes.base,messageRouter)
     
     app.use((err,req,res,next)=>
     {
