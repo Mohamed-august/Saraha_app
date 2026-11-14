@@ -1,7 +1,7 @@
 import { createClient } from "redis";
 
 export const redisClient = createClient({
-    url:"redis://127.0.0.1:6379",
+    url:process.env.REDIS_URL,
     database:5,
     RESP: 2
 })
