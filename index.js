@@ -4,7 +4,7 @@
     import { DBConnection } from "./src/DB/db.connection.js"
     import userRouter, { routes as userRoutes } from "./src/modules/Users/users.controller.js"
     import messageRouter, { routes as messageRoutes } from "./src/modules/message/message.controller.js"
-    import { redisClient } from "./src//DB/redis.connect.js"
+    import { redisClient } from "./src/DB/redis.connect.js"
 
     const app = express()
 
