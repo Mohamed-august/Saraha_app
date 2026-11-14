@@ -23,7 +23,9 @@ const bootstrap = async ()=>
 
     app.get("/",async(req,res)=>
     {
-        console.log("server is running")
+        res.status(200).json({
+            msg:"server is running"
+        })
     })
     await redisClient.set("test","ahmed")
     app.use("/uploads",express.static("./uploads"))
