@@ -8,7 +8,6 @@ import userRouter , { routes as userRoutes } from "./modules/Users/users.control
 import messageRouter , { routes as messageRoutes } from "./modules/message/message.controller.js"
 import cors from "cors"
 
-import { userModel } from "./DB/models/users.model.js"
 import { redisClient } from "./DB/redis.connect.js"
 
 const bootstrap = async ()=>
