@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { createClient } from "redis";
 
     export const redisClient = createClient({
@@ -9,6 +10,6 @@ import { createClient } from "redis";
         },
     });
 
-redisClient.on("error",(err)=>console.log("Redis client error",err))
-.on("connect",()=>console.log("redis client connected"))
+redisClient.on("error",(err)=>console.log(chalk.red("Redis client error",err)))
+.on("connect",()=>console.log(chalk.green("redis client connected")))
 .connect()
