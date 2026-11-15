@@ -384,23 +384,23 @@ export const resetPassword=async(email,otp,password)=>
     }
 }   
 
-// export const checkOtp=async(user,otp)=>
-// {
+export const checkOtp=async(user,otp)=>
+{
 
-//     if (!user.otp || user.otp.expireIn < Date.now()) {
-//         errorRes({
-//             msg: "otp expired",
-//             statusCode: 404
-//         })
-//     }
-//     const isMatch = (user.otp.code === String(otp)) || (await compareHash(String(otp), user.otp.code).catch(() => false))
-//     if (!isMatch) {
-//         errorRes({
-//             msg: "in-valid otp",
-//             statusCode: 400
-//         })
-//     }
-// }
+    if (!user.otp || user.otp.expireIn < Date.now()) {
+        errorRes({
+            msg: "otp expired",
+            statusCode: 404
+        })
+    }
+    const isMatch = (user.otp.code === String(otp)) || (await compareHash(String(otp), user.otp.code).catch(() => false))
+    if (!isMatch) {
+        errorRes({
+            msg: "in-valid otp",
+            statusCode: 400
+        })
+    }
+}
 
 export const logout = async(userId,jti)=>
 {
