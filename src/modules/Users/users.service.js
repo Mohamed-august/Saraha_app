@@ -250,7 +250,7 @@ export const resendConfirmEmailOtp=async(email)=>
 
     const user = await userModel.findOne({email,
         confirmedAt:{
-        $exists:false
+        $exists:true
     }})
     if(!user)
     {
